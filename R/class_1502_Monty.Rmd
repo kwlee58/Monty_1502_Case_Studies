@@ -1,0 +1,101 @@
+---
+title: "Monty Hall and Default Effects"
+author: "coop711"
+date: "2015년 9월 9일"
+output: html_document
+---
+
+Reading in Data
+---------------
+
+```{r}
+setwd("~/Dropbox/Works/Class/Case_studies_in_stat/201502/")
+library(xlsx)
+monty.default<-read.xlsx("class_roll.xlsx", 1, startRow=2, colIndex=c(4:5, 10:14))
+monty.default
+```
+
+* `character` 중 `factor` 성격인 변수들을 재설정 
+
+```{r}
+options(width=132)
+monty.default$Monty_Hall <- factor(monty.default$Monty_Hall)
+monty.default$Default <- factor(monty.default$Default)
+monty.default$HT <- factor(monty.default$HT)
+```
+
+* Wason Selection 문제의 응답을  "Right/Wrong"을 `label`로 갖는 `factor`로 재코딩.
+
+```{r}
+monty.default$Wason_1.f <- factor(ifelse(monty.default$Wason_1 == "A-3", "Right", "Wrong"))
+monty.default$Wason_2.f <- factor(ifelse(monty.default$Wason_2 == "Beer-17", "Right", "Wrong"))
+str(monty.default)
+```
+
+```{r}
+(results <- monty.default[, c(7, 3, 8:9, 6)])
+str(results)
+```
+
+* Monty Hall 문제의 응답을 앞/뒷면 별로 `table()`로 요약
+
+```{r}
+tapply(results$Monty_Hall, results$HT, table)
+options(digits=2)
+tapply(results$Monty_Hall, results$HT, function(x) prop.table(table(x)))
+```
+
+* data frame 으로 정리할 수 있도록 `aggregate()` 적용
+
+```{r}
+aggregate(results$Monty_Hall, list(HT=results$HT), table)
+aggregate(results$Monty_Hall, list(HT=results$HT), function(x) prop.table(table(x)))
+```
+
+* Wason Selection 문제의 응답을앞/뒷면 별로 `table()`로 요약
+
+```{r}
+tapply(results$Wason_1.f, results$HT, table)
+tapply(results$Wason_2.f, results$HT, table)
+```
+
+* data frame 으로 정리할 수 있도록 `aggregate()` 적용. 두 방법의 차이에 유의 
+
+```{r}
+aggregate(results$Wason_1.f, list(HT=results$HT), table)
+aggregate(results$Wason_1.f, list(HT=results$HT), function(x) prop.table(table(x)))
+aggregate(Wason_2.f~HT, data=results, table)
+aggregate(Wason_2.f~HT, data=results, function(x) prop.table(table(x)))
+```
+
+* 초기값 문제의 응답을 앞/뒷면 별로 `table()`로 요약
+
+```{r}
+tapply(results$Default, results$HT, table)
+```
+
+* data frame 으로 정리할 수 있도록 `aggregate()` 적용
+
+```{r}
+aggregate(results$Default, list(HT=results$HT), table)
+aggregate(results$Default, list(HT=results$HT), function(x) prop.table(table(x)))
+```
+
+* `ddply()`를 사용할 수 있도록 `plyr` package 등록
+
+```{r}
+library(plyr)
+```
+
+* `ddply()` 활용.
+
+```{r}
+ddply(data.frame(results$Default), .(HT = results$HT), table)
+ddply(data.frame(results$Default), .(HT = results$HT), function(x) prop.table(table(x)))
+```
+
+* 정리
+
+```{r}
+save.image(file="monty_0910.rda")
+```
